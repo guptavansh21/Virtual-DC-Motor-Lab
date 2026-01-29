@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DC Shunt Motor Lab</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="dashboard-container">
+        
+        <header class="header">
+            <div class="logo-section">
+                <i class="fas fa-industry fa-2x"></i>
+                <div>
+                    <h1>DC Shunt Motor Lab</h1>
+                    <small>Transparent Physics Engine</small>
+                </div>
+            </div>
+            <div class="status-indicator">
+                <span class="status-dot"></span> System Active
+            </div>
+        </header>
+
+        <div class="main-grid">
+
+            <div class="card controls-panel custom-scroll">
+                
+                <div class="specs-box">
+                    <h3><i class="fas fa-clipboard-list"></i> Motor Constants</h3>
+                    <div class="specs-grid">
+                        <div class="spec-item" title="Internal Armature Resistance">
+                            <span>R<sub>a(int)</sub>:</span> <strong>0.5 Ω</strong>
+                        </div>
+                        <div class="spec-item" title="Internal Field Winding Resistance">
+                            <span>R<sub>f(int)</sub>:</span> <strong>200 Ω</strong>
+                        </div>
+                        <div class="spec-item" title="Constant Load Current (Assumed)">
+                            <span>I<sub>L(const)</sub>:</span> <strong>2.0 A</strong>
+                        </div>
+                        <div class="spec-item" title="Speed Constant (Calibration)">
+                            <span>K<sub>const</sub>:</span> <strong>7.534</strong>
+                        </div>
+                    </div>
+                    <div class="formula-box">
+                        <small>Speed Equation:</small>
+                        <code>N = K × (E<sub>b</sub> / I<sub>f</sub>)</code>
+                    </div>
+                </div>
+
+                <hr class="divider">
+
+                <h2><i class="fas fa-sliders-h"></i> Controls</h2>
+
+                <div class="control-group">
+                    <div class="label-row">
+                        <label>Supply Voltage (V<sub>s</sub>)</label>
+                        <i class="fas fa-info-circle info-icon" title="Terminal Voltage applied to the motor"></i>
+                    </div>
+                    <div class="input-row">
+                        <input type="number" id="num-volt" value="220" min="0" max="500">
+                        <span class="unit-tag">V</span>
+                    </div>
+                    <input type="range" id="range-volt" min="0" max="500" value="220" class="slider">
+                </div>
+
+                <div class="control-group">
+                    <div class="label-row">
+                        <label>Armature Rheostat (R<sub>a_ext</sub>)</label>
+                        <div class="tooltip-container">
+                            <i class="fas fa-info-circle info-icon"></i>
+                            <span class="tooltip-text">Total Ra = 0.5 + Ra_ext<br>Eb = V - Ia(Ra_total)</span>
+                        </div>
+                    </div>
+                    <div class="input-row">
+                        <input type="number" id="num-ra" value="0" min="0" max="50">
+                        <span class="unit-tag">Ω</span>
+                    </div>
+                    <input type="range" id="range-ra" min="0" max="50" value="0" step="0.1" class="slider">
+                </div>
+
+                <div class="control-group">
+                    <div class="label-row">
+                        <label>Field Rheostat (R<sub>f_ext</sub>)</label>
+                        <div class="tooltip-container">
+                            <i class="fas fa-info-circle info-icon"></i>
+                            <span class="tooltip-text">Total Rf = 200 + Rf_ext<br>If = V / Rf_total</span>
+                        </div>
+                    </div>
+                    <div class="input-row">
+                        <input type="number" id="num-rf" value="0" min="0" max="300">
+                        <span class="unit-tag">Ω</span>
+                    </div>
+                    <input type="range" id="range-rf" min="0" max="300" value="0" step="1" class="slider">
+                </div>
+
+                <div class="button-group">
+                    <button id="btn-record" class="btn btn-primary"><i class="fas fa-pen"></i> Log Data</button>
+                    <button id="btn-reset" class="btn btn-danger"><i class="fas fa-undo"></i> Reset</button>
+                </div>
+            </div>
+
+            <div class="visuals-wrapper">
+                <div class="card motor-card">
+                    <div class="motor-header">
+                        <div class="data-tag" title="Assumed Constant Load">Load I<sub>a</sub>: <strong>2.0 A</strong></div>
+                        <div class="data-tag" title="Field Current determines Flux">Flux (Φ) ∝ <strong>I<sub>f</sub></strong></div>
+                    </div>
+
+                    <div class="motor-stage">
+                        <div class="motor-unit">
+                            <div class="motor-housing">
+                                <i class="fas fa-fan" id="motor-fan"></i>
+                            </div>
+                            <div class="motor-base"></div>
+                        </div>
+                        <div class="digital-panel">
+                            <span class="panel-label">ROTOR SPEED (N)</span>
+                            <div class="panel-screen">
+                                <span id="display-rpm">0</span> <span class="unit">RPM</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="meters-row">
+                    <div class="card meter-box">
+                        <div class="meter-content">
+                            <h3>Back EMF (E<sub>b</sub>)</h3>
+                            <div class="digital-readout"><span id="display-eb">0.0</span> <small>V</small></div>
+                            <small class="formula-hint">V - I<sub>a</sub>R<sub>a</sub></small>
+                        </div>
+                    </div>
+                    <div class="card meter-box">
+                        <div class="meter-content">
+                            <h3>Field Current (I<sub>f</sub>)</h3>
+                            <div class="digital-readout cyan"><span id="display-if">0.000</span> <small>A</small></div>
+                            <small class="formula-hint">V / R<sub>f(total)</sub></small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card table-panel custom-scroll">
+                <h3><i class="fas fa-table"></i> Data Log</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>V<sub>s</sub> (V)</th>
+                                <th>R<sub>a_ext</sub></th>
+                                <th>R<sub>f_ext</sub></th>
+                                <th>I<sub>f</sub> (A)</th>
+                                <th>E<sub>b</sub> (V)</th>
+                                <th>Speed (RPM)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="observation-body"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card graph-panel">
+                <h3><i class="fas fa-chart-line"></i> Speed Characteristic</h3>
+                <div class="chart-container">
+                    <canvas id="speedChart"></canvas>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
